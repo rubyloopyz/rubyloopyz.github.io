@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Htet Hsu May (Ruby)</title>
+<meta name="description" content="Data analyst portfolio of Htet Hsu May (Ruby): forecasting, root-cause analysis and the tests behind each number.">
+<style>
+  :root {
+    --stock: #F4F5F1;
+    --ink: #15171A;
+    --graphite: #585E66;
+    --rule: #CDD1CA;
+    --tape: #FFD100;
+    --tape-ink: #15171A;
+    --mark: rgba(255, 209, 0, 0.5);
+    --held: #2C7650;
+    --revised: #B23F28;
+    --trial: #A86F00;
+    --null: #6B7178;
+    --track: #E3E6DF;
+
+    --sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    --serif: "Times New Roman", Times, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --stock: #111315;
+      --ink: #ECEEE9;
+      --graphite: #9BA1A8;
+      --rule: #2B3035;
+      --tape: #EDC200;
+      --tape-ink: #111315;
+      --mark: rgba(237, 194, 0, 0.28);
+      --held: #72C193;
+      --revised: #E88467;
+      --trial: #E3B04B;
+      --null: #9BA1A8;
+      --track: #22262A;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --stock: #111315;
+    --ink: #ECEEE9;
+    --graphite: #9BA1A8;
+    --rule: #2B3035;
+    --tape: #EDC200;
+    --tape-ink: #111315;
+    --mark: rgba(237, 194, 0, 0.28);
+    --held: #72C193;
+    --revised: #E88467;
+    --trial: #E3B04B;
+    --null: #9BA1A8;
+    --track: #22262A;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--stock);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .wrap {
+    max-width: 1120px;
+    margin-inline: auto;
+    padding-inline: clamp(16px, 4vw, 40px);
+  }
+  a {
+    color: inherit;
+    text-decoration-line: underline;
+    text-decoration-color: var(--rule);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.15s ease;
+  }
+  a:hover { text-decoration-color: currentColor; }
+  a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+  h1, h2, h3, p { margin: 0; }
+  h2, h3 { text-wrap: balance; }
+
+  .label {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--graphite);
+  }
+
+  /* ---------- top bar ---------- */
+  .topbar .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-block: 18px;
+  }
+  .topbar nav {
+    display: flex;
+    gap: 22px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .topbar nav a { text-decoration-color: transparent; }
+  .topbar nav a:hover { text-decoration-color: currentColor; }
+
+  /* ---------- tape band ---------- */
+  .tape {
+    background: var(--tape);
+    color: var(--tape-ink);
+  }
+  .tape .wrap {
+    padding-block: clamp(22px, 3vw, 36px) clamp(16px, 2.4vw, 26px);
+    display: grid;
+    gap: 14px;
+  }
+  .tape h1 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(40px, 9.4vw, 124px);
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+  }
+  .tape-line {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 24px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- intro ---------- */
+  .intro .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: clamp(32px, 6vw, 72px);
+    padding-block: clamp(40px, 6vw, 72px);
+    align-items: start;
+  }
+  .intro-text { display: grid; gap: 18px; max-width: 34rem; }
+  .lead {
+    font-size: clamp(22px, 2.3vw, 27px);
+    line-height: 1.35;
+    text-wrap: pretty;
+  }
+  .intro-text p:not(.lead) { color: var(--graphite); text-wrap: pretty; }
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    padding: 0;
+    margin: 6px 0 0;
+    list-style: none;
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  .contact span { color: var(--graphite); margin-right: 6px; }
+
+  /* ---------- backtest exhibit ---------- */
+  .backtest {
+    margin: 0;
+    border-top: 2px solid var(--ink);
+    padding-top: 14px;
+    display: grid;
+    gap: 18px;
+  }
+  .backtest .sub { color: var(--graphite); font-size: 16.5px; margin-top: 4px; }
+  .bt-row { display: grid; gap: 7px; }
+  .bt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    font-size: 17px;
+  }
+  .bt-val {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .bt-val.held { color: var(--held); }
+  .bt-val.revised { color: var(--revised); }
+  .track {
+    position: relative;
+    height: 22px;
+    background: var(--track);
+  }
+  .track::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--ink);
+  }
+  .bar { position: absolute; top: 5px; bottom: 5px; }
+  .bar.held { background: var(--held); }
+  .bar.revised { background: var(--revised); }
+  .axis {
+    position: relative;
+    height: 16px;
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--graphite);
+    font-variant-numeric: tabular-nums;
+    margin-top: -8px;
+  }
+  .axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .axis-note {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--graphite);
+    margin-top: -10px;
+  }
+  .backtest .takeaway { font-size: 17px; border-top: 1px solid var(--rule); padding-top: 12px; }
+
+  /* ---------- work ---------- */
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-top: 2px solid var(--ink);
+    padding-top: 14px;
+    margin-bottom: 8px;
+  }
+  .section-head h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(28px, 3.6vw, 40px);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+  }
+  .work { padding-block: 8px clamp(40px, 6vw, 72px); }
+
+  .entry {
+    display: grid;
+    grid-template-columns: minmax(0, 270px) minmax(0, 1fr);
+    gap: clamp(20px, 5vw, 64px);
+    padding-block: clamp(28px, 4vw, 44px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .entry:last-child { border-bottom: 0; }
+  .entry-fig { display: grid; gap: 10px; align-content: start; }
+  .fig {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(48px, 6vw, 72px);
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+  .fig small { font-size: 0.5em; margin-left: 0.06em; letter-spacing: 0; }
+  .fig-label { font-size: 16px; line-height: 1.4; color: var(--graphite); max-width: 17rem; }
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--sans);
+    font-size: 12.5px;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+  .verdict::before {
+    content: "";
+    flex: none;
+    width: 9px;
+    height: 9px;
+    background: var(--v);
+  }
+  .verdict.held { --v: var(--held); }
+  .verdict.revised { --v: var(--revised); }
+  .verdict.trial { --v: var(--trial); }
+  .verdict.null { --v: var(--null); }
+
+  .entry-body { display: grid; gap: 14px; max-width: 42rem; }
+  .entry-body h3 {
+    font-family: var(--sans);
+    font-size: clamp(20px, 2.1vw, 24px);
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .entry-body > p { text-wrap: pretty; }
+  mark {
+    color: inherit;
+    background: linear-gradient(transparent 14%, var(--mark) 14%, var(--mark) 90%, transparent 90%);
+    padding-inline: 0.12em;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .checked {
+    display: grid;
+    gap: 4px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--rule);
+  }
+  .checked p { color: var(--graphite); font-size: 17px; text-wrap: pretty; }
+  .entry-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px 20px;
+    margin-top: 2px;
+  }
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .stack li {
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 3px 7px;
+    border: 1px solid var(--rule);
+    color: var(--graphite);
+  }
+  .foot-link { font-family: var(--sans); font-size: 13.5px; white-space: nowrap; }
+  .foot-note { font-family: var(--sans); font-size: 12.5px; color: var(--graphite); }
+
+  /* ---------- smaller things ---------- */
+  .also { padding-bottom: clamp(40px, 6vw, 72px); }
+  .also ul { list-style: none; padding: 0; margin: 0; }
+  .also li {
+    display: grid;
+    grid-template-columns: minmax(0, 270px) minmax(0, 1fr) auto;
+    gap: 6px clamp(20px, 5vw, 64px);
+    padding-block: 16px;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .also li:last-child { border-bottom: 0; }
+  .also .where { font-family: var(--sans); font-size: 13px; color: var(--graphite); }
+  .also p span { color: var(--graphite); }
+
+  /* ---------- toolkit ---------- */
+  .toolkit { padding-bottom: clamp(40px, 6vw, 72px); }
+  .kit {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 28px clamp(20px, 3vw, 40px);
+    margin: 0;
+    padding-top: 22px;
+  }
+  .kit div { display: grid; gap: 8px; align-content: start; }
+  .kit dt { margin: 0; }
+  .kit dd { margin: 0; font-size: 17px; line-height: 1.5; }
+  .kit dd + dd { color: var(--graphite); }
+
+  /* ---------- footer ---------- */
+  footer .wrap {
+    border-top: 2px solid var(--ink);
+    padding-block: 26px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 14px 32px;
+  }
+  footer p { max-width: 36rem; }
+  footer .label { letter-spacing: 0.04em; text-transform: none; font-weight: 400; }
+
+  @media (max-width: 880px) {
+    .intro .wrap { grid-template-columns: 1fr; }
+    .kit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px) {
+    .entry { grid-template-columns: 1fr; }
+    .fig-label { max-width: none; }
+    .also li { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 460px) {
+    .kit { grid-template-columns: 1fr; }
+    .topbar nav { gap: 16px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <span class="label">Bangkok · UTC+7</span>
+    <nav aria-label="Sections">
+      <a href="#work">Work</a>
+      <a href="#toolkit">Toolkit</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<section class="tape" aria-label="Name">
+  <div class="wrap">
+    <h1>Htet Hsu May</h1>
+    <div class="tape-line">
+      <span>RUBY · DATA ANALYST</span>
+      <span>E-COMMERCE FULFILMENT · FORECASTING · ROOT CAUSE</span>
+    </div>
+  </div>
+</section>
+
+<section class="intro">
+  <div class="wrap">
+    <div class="intro-text">
+      <p class="lead">I'm Ruby, a final-year ICT student at Rangsit University, working as a data analyst intern in e-commerce fulfilment at Decathlon Thailand.</p>
+      <p>Most of my work is forecasting and root-cause analysis on operational data. The habit I'd bring to your team: before a number reaches a meeting, I test it against data it has never seen. When it misses, the miss goes in the report too.</p>
+      <ul class="contact">
+        <li><span>Email</span><a href="mailto:hhsumay04@gmail.com">hhsumay04@gmail.com</a></li>
+        <li><span>GitHub</span><a href="https://github.com/rubyloopyz">rubyloopyz</a></li>
+        <li><span>LinkedIn</span><a href="https://www.linkedin.com/in/htethsumay22">htethsumay22</a></li>
+      </ul>
+    </div>
+
+    <figure class="backtest" aria-labelledby="bt-title">
+      <div>
+        <p class="label" id="bt-title">Backtest · 9.9 campaign forecast</p>
+        <p class="sub">Model built on June and July only, then scored against August, which it had never seen.</p>
+      </div>
+
+      <div class="bt-row">
+        <div class="bt-head"><span>Normal-day baseline</span><span class="bt-val held">−1.3%</span></div>
+        <div class="track" role="img" aria-label="Forecast 1.3 percent below actual">
+          <div class="bar held" style="left: 47.4%; width: 2.6%;"></div>
+        </div>
+      </div>
+
+      <div class="bt-row">
+        <div class="bt-head"><span>8.8 peak day</span><span class="bt-val revised">+20.5%</span></div>
+        <div class="track" role="img" aria-label="Forecast 20.5 percent above actual">
+          <div class="bar revised" style="left: 50%; width: 41%;"></div>
+        </div>
+      </div>
+
+      <div class="axis" aria-hidden="true">
+        <span style="left: 10%;">−20%</span>
+        <span style="left: 30%;">−10%</span>
+        <span style="left: 50%;">0</span>
+        <span style="left: 70%;">+10%</span>
+        <span style="left: 90%;">+20%</span>
+      </div>
+      <div class="axis-note" aria-hidden="true"><span>forecast under</span><span>forecast over</span></div>
+
+      <p class="takeaway">The baseline held. The campaign multiplier ran hot, so I rebuilt it on three campaigns before 9.9.</p>
+    </figure>
+  </div>
+</section>
+
+<section class="work" id="work">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Selected work</h2>
+      <span class="label">Each with the check behind it</span>
+    </div>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">1.2<small>%</small></span>
+        <span class="fig-label">error on the 10.10 sale, from a daily forecast made 25 days ahead</span>
+        <span class="verdict held">Held on the day</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Decathlon Thailand · Sept–Oct 2026</p>
+        <h3>How many online orders will each day of Q4 bring, through 10.10, 11.11 and 12.12?</h3>
+        <p>A daily forecast of online orders from October to December for the planning team: a normal-day level, month and weekday factors, and a boost for each sale day, scaled from 9.9 by how past sales compared with it.</p>
+        <p>When October started below plan, I split the forecast into website and Shopee. <mark>The dip was website-only</mark>, in weeks with no website promotion running.</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>Fitted on data up to 13 Aug and scored blind on 1–13 Sept: 8.8% average daily error, against 18.1% for my earlier warehouse-based model. A change I made on 19 Sept would have put 10.10 12% off, so I kept the original. My 15 Oct mid-month forecast was 34% low, so I dropped a 2025 assumption that no longer held.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Excel</li><li>Python · pandas</li></ul>
+          <span class="foot-note">Internal work · method note on request</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">79<small>%</small></span>
+        <span class="fig-label">of pre-picked units sold on the 8.8 campaign day itself, in a backtest on unseen data</span>
+        <span class="verdict held">Beat the previous rule at the same fill rate</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Decathlon Thailand · Aug 2026</p>
+        <h3>How many parcels will a double-date sale bring, and what can be picked before it starts?</h3>
+        <p>A daily parcel forecast built from packing and pick-line exports: a monthly baseline, day-of-week factors and a campaign multiplier, converted into a headcount plan. On top of it sits an article-level pre-pick list, so the warehouse clears part of the peak before orders land.</p>
+        <p>The finding that shaped the design: <mark>campaign demand is not concentrated</mark>. The top 20 articles are only about a tenth of a peak day's units, so a short list can't do the job and the rule has to score thousands of articles.</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>Six candidate rules, each trained on June and July and scored on 8.8. The chosen one sold 79% of its units on the day, and 4.6% were still unsold five days later.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Excel</li><li>Python · pandas</li><li>AS400 exports</li></ul>
+          <span class="foot-note">Internal work · method note on request</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">5.4<small>%</small></span>
+        <span class="fig-label">of free-text return comments give an actual customer reason</span>
+        <span class="verdict revised">First pass said 8.6%. Recounted before reporting</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Decathlon Thailand · Sept 2026</p>
+        <h3>Why do customers return things? The return log mostly can't say.</h3>
+        <p>Asked for the causes behind returns, I checked whether the data could name them before counting anything. Every free-text comment across five return and case logs, most of them in Thai, was translated and judged one by one.</p>
+        <p>Most comments are shipping status and internal notes. The field that is complete tells a clearer story: <mark>95.5% of returned lines go straight back to stock</mark>, so defects are a small share, and the top two stated reasons are fulfilment errors (missing items, wrong items).</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>A manual audit found the keyword pass was counting delivery failures as customer reasons. Thai has no spaces between words, so short keywords matched inside unrelated ones and four had to be removed. The recommendation was a required reason at registration, and since then the field is being filled in: about 1 in 14 returns by October, up from 1 in 39 in August.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Python · openpyxl</li><li>Excel</li><li>Text classification</li></ul>
+          <span class="foot-note">Internal work · method note on request</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">77<small>%</small></span>
+        <span class="fig-label">of missing and wrong-item cases fall into four problems</span>
+        <span class="verdict trial">Fixes in a two-week trial</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Decathlon Thailand · Oct 2026</p>
+        <h3>Where do missing and wrong items come from, and what would stop them?</h3>
+        <p>A follow-up to the returns work: every case where a parcel arrived short or with the wrong item, sorted by what went wrong and where. <mark>Over half trace back to packing</mark>, and the largest single problem is an item left out of the parcel.</p>
+        <p>I spent time in the packing area before writing suggestions, so each one says who runs it, how to try it and what we'd count to see if it worked.</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>Cases are counted once per incident, so an order logged twice counts once. Most case notes don't say who packed the order, so each case was looked up to find the packing site. Trials started on 19 Oct, with a weekly update on new cases.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Python · openpyxl</li><li>Excel</li></ul>
+          <span class="foot-note">Internal work · method note on request</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">0.840</span>
+        <span class="fig-label">ROC-AUC on held-out customers, against 0.500 for a do-nothing baseline</span>
+        <span class="verdict held">Beats baseline on a held-out split</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Personal · IBM Telco dataset, 7,032 accounts</p>
+        <h3>Which customers leave, what does it cost, and can we see it coming?</h3>
+        <p>Churn costs $139,130 a month, 30.5% of recurring revenue. Month-to-month customers churn at 42.7% against 2.8% on two-year contracts, and hold 87% of the revenue at risk.</p>
+        <p>Churned customers appear to pay more, which points straight at a price cut. Split by internet tier, the gap reverses in all three tiers: <mark>monthly charge stands in for which product was bought</mark>, so it's no case for cutting prices.</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>Stratified hold-out, weighted toward recall because a missed churner costs more than a wasted offer. The reversal was re-tested under contract-type stratification, where it doesn't hold, so the claim is scoped to what survived.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Python · pandas</li><li>scikit-learn</li><li>SQL</li></ul>
+          <a class="foot-link" href="https://github.com/rubyloopyz/customer-retention-analysis">Code on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">46.7<small>%</small></span>
+        <span class="fig-label">of email tickets met the first-response target, against 100% for chat</span>
+        <span class="verdict revised">Silent timestamp bug found and fixed</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Personal · Simulated IT service desk, Sept 2026</p>
+        <h3>Where does an IT service desk miss its response targets?</h3>
+        <p>First response is met 78.7% of the time and resolution 67.6%, counted in business hours only. Tickets raised on Monday before 11:00 meet the response target 66.5% of the time, against 80.6% otherwise.</p>
+        <p><mark>The category mix is about the same on every channel</mark>, so the email gap isn't harder problems arriving by email.</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>A ticket landing a split second before 18:00 stalled the business-hours loop, and its safety cap returned a wrong time without an error for 141 tickets. I fixed it by jumping straight to closing time, and SLA flags now separate met, breached and still running.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Python · pandas</li></ul>
+          <a class="foot-link" href="https://github.com/rubyloopyz/helpdesk-sla-analysis">Code on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">−0.022</span>
+        <span class="fig-label">out-of-sample R², which is worse than always predicting the mean</span>
+        <span class="verdict null">Null result, reported as one</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Personal · 2,063 hourly observations, 10 assets</p>
+        <h3>Does market sentiment move crypto prices? Not in this data.</h3>
+        <p>Eight candidate signals tested against 24-hour returns; none reach significance. The sentiment measures correlate with each other (up to 0.66) and not with price. <mark>The column labelled prediction confidence tracks news volume, not accuracy.</mark></p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>Chronological train/test split, a mean-prediction baseline and lagged daily tests. The distributions turned out to be synthetic, uniform where real sentiment has fat tails, so the write-up says the null result belongs to the file rather than to markets.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>MySQL</li><li>Python · pandas</li><li>scikit-learn</li></ul>
+          <a class="foot-link" href="https://github.com/rubyloopyz/crypto-sentiment-analysis-sql-python">Code on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">1.25<small>GB</small></span>
+        <span class="fig-label">measured memory floor for the image worker; it crashes at 1&nbsp;GB</span>
+        <span class="verdict held">SQL aggregates cross-checked in tests</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Personal · Web app, Aug 2026</p>
+        <h3>Rotation, a wardrobe tracker that reports cost per wear</h3>
+        <p>Upload a photo of a garment: a background worker removes the background with an ONNX model, extracts its colour palette with k-means written from scratch, and the app ranks what is earning its keep and what is dead weight.</p>
+        <p>Uploads enqueue a job instead of running the model in the request, so ten uploads never wait on the first. <mark>Cost per wear is aggregated per item before summing</mark>, because summing across the wear-log join counts each price once per wear.</p>
+        <div class="entry-foot">
+          <ul class="stack"><li>TypeScript · Next.js</li><li>Postgres · Prisma</li><li>pg-boss</li><li>ONNX</li></ul>
+          <a class="foot-link" href="https://github.com/rubyloopyz/rotation">Code on GitHub →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry-fig">
+        <span class="fig">45<small>s</small></span>
+        <span class="fig-label">idle time before an unsent comment is discarded, so the next person never sees it</span>
+        <span class="verdict revised">Silent data loss found and fixed</span>
+      </div>
+      <div class="entry-body">
+        <p class="label">Decathlon Thailand · Sept 2026</p>
+        <h3>A one-tap mood check-in screen for the warehouse floor</h3>
+        <p>A TV kiosk beside the clock-in terminal. Staff tap how they feel and can add a short comment on an on-screen keyboard with English and Thai layouts. It runs on Google Apps Script with a Sheet as the database, so there is no server on site to maintain.</p>
+        <div class="checked">
+          <span class="label">How it was checked</span>
+          <p>Reading the execution logs showed a kiosk tab left open across a redeploy was running old page code against the new server and dropping comments without an error. <mark>The server now stamps a build id on every response</mark>, and the page reloads itself when it changes.</p>
+        </div>
+        <div class="entry-foot">
+          <ul class="stack"><li>Apps Script</li><li>Google Sheets</li><li>HTML · CSS · JS</li></ul>
+          <span class="foot-note">Internal tool</span>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="also" aria-labelledby="also-title">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 id="also-title">Smaller things</h2>
+    </div>
+    <ul>
+      <li>
+        <span class="where">Decathlon Thailand · Oct 2026</span>
+        <p>Store feedback map <span>· every Thailand store on a map, with a survey for store teams on warehouse and transport service, in English and Thai</span></p>
+        <span class="foot-note">In progress</span>
+      </li>
+      <li>
+        <span class="where">Decathlon Thailand · Sept 2026</span>
+        <p>Picking-area leaderboard <span>· throughput and team performance board for the warehouse pick team</span></p>
+        <span class="foot-note">Internal</span>
+      </li>
+      <li>
+        <span class="where">Personal · simulated data</span>
+        <p>A/B test of an onboarding flow <span>· two-proportion z-tests and a Welch t-test on conversion and revenue</span></p>
+        <a class="foot-link" href="https://github.com/rubyloopyz/ab-testing-analysis">GitHub →</a>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="toolkit" id="toolkit" aria-labelledby="kit-title">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 id="kit-title">Toolkit</h2>
+    </div>
+    <dl class="kit">
+      <div>
+        <dt class="label">Every day</dt>
+        <dd>SQL, Python (pandas, scikit-learn), Excel, Power BI</dd>
+      </div>
+      <div>
+        <dt class="label">Also built with</dt>
+        <dd>TypeScript, Next.js, Postgres, Google Apps Script, Leaflet, Git</dd>
+      </div>
+      <div>
+        <dt class="label">Education</dt>
+        <dd>B.Sc. Information and Communications Technology, Rangsit University</dd>
+        <dd>2023 – present · GPA 3.36</dd>
+      </div>
+      <div>
+        <dt class="label">Languages</dt>
+        <dd>English, professional working proficiency</dd>
+        <dd>Burmese, native</dd>
+      </div>
+      <div>
+        <dt class="label">Certificates</dt>
+        <dd>Microsoft Power BI Data Analyst · Google Project Management · Google AI</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<footer id="contact">
+  <div class="wrap">
+    <p>Open to data analyst internships once my Decathlon placement ends in December 2026. The quickest way to reach me is <a href="mailto:hhsumay04@gmail.com">hhsumay04@gmail.com</a>.</p>
+    <span class="label">Updated October 2026</span>
+  </div>
+</footer>
+</body>
+</html>
